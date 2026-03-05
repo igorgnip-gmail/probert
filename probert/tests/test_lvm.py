@@ -225,10 +225,10 @@ class TestLvm(unittest.IsolatedAsyncioTestCase):
                      "vg_size": "doesnt_end_with_B_"}
                 ]"""))
         self.assertEqual(
-            ("vg0", {'name': "vg0",
-                     'devices': sorted(['/dev/md0', '/dev/md1', '/dev/md2']),
-                     'size': '21449670656B',
-                     'partial': False}),
+            {'name': "vg0",
+             'devices': sorted(['/dev/md0', '/dev/md1', '/dev/md2']),
+             'size': '21449670656B',
+             'partial': False},
             lvm.extract_lvm_volgroup('vg0', input_data))
 
     def test_extract_lvm_volgroup__partial(self, m_run):
@@ -247,10 +247,10 @@ class TestLvm(unittest.IsolatedAsyncioTestCase):
                      "vg_size": "21449670656B"}
                 ]"""))
         self.assertEqual(
-            ("vg0", {'name': "vg0",
-                     'devices': sorted(['/dev/md0']),
-                     'size': '21449670656B',
-                     'partial': True}),
+            {'name': "vg0",
+             'devices': sorted(['/dev/md0']),
+             'size': '21449670656B',
+             'partial': True},
             lvm.extract_lvm_volgroup('vg0', input_data))
 
     def test_extract_lvm_volgroup_no_size_set_to_zero_bytes(self, m_run):
@@ -269,10 +269,10 @@ class TestLvm(unittest.IsolatedAsyncioTestCase):
                      "vg_size": null}
                 ]"""))
         self.assertEqual(
-            ("vg0", {'name': "vg0",
-                     'devices': sorted(['/dev/md0', '/dev/md1']),
-                     'size': '0B',
-                     'partial': False}),
+            {'name': "vg0",
+             'devices': sorted(['/dev/md0', '/dev/md1']),
+             'size': '0B',
+             'partial': False},
             lvm.extract_lvm_volgroup('vg0', input_data))
 
     @mock.patch('probert.lvm.read_sys_block_size_bytes')
