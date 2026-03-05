@@ -173,10 +173,10 @@ def extract_lvm_volgroup(vg_name, report_data):
     if size is None:
         size = '0B'
 
-    return (vg_name, {'name': vg_name,
-                      'devices': sorted(list(devices)),
-                      'size': size,
-                      'partial': missing_pvs > 0})
+    return {'name': vg_name,
+            'devices': sorted(list(devices)),
+            'size': size,
+            'partial': missing_pvs > 0}
 
 
 async def probe(context=None, **kw):
@@ -226,8 +226,8 @@ async def probe(context=None, **kw):
                 log.error('Found duplicate logical volume: %s', lv_id)
                 continue
 
-            vg_name = device['DM_VG_NAME']
-            (vg_id, new_vg) = extract_lvm_volgroup(vg_name, vg_report)
+            vg_id = vg_name = device['DM_VG_NAME']
+            new_vg = extract_lvm_volgroup(vg_name, vg_report)
             if vg_id not in vgroups:
                 vgroups[vg_id] = new_vg
             else:
