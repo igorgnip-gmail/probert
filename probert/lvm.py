@@ -231,7 +231,6 @@ async def probe(context=None, **kw):
             if vg_id not in vgroups:
                 vgroups[vg_id] = new_vg
             else:
-                log.error('Found duplicate volume group: %s', vg_id)
                 continue
 
             if vg_id not in pvols:
