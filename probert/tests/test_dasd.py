@@ -208,15 +208,13 @@ class TestDasd(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(expected_results, await dasd.probe(context=context))
 
     @mock.patch('probert.dasd.subprocess.run')
-    @mock.patch('probert.dasd.open')
     @mock.patch('probert.dasd.platform.machine')
-    async def test_dasd_probe_virtio_dasd(self, m_machine, m_open, m_run):
+    async def test_dasd_probe_virtio_dasd(self, m_machine, m_run):
         m_machine.return_value = 's390x'
 
         virtio_major = random_string()
         devname = random_string()
 
-        m_open.return_value = ['{} virtblk\n'.format(virtio_major)]
         m_run.return_value.returncode = 0
 
         context = mock.MagicMock()
@@ -226,28 +224,31 @@ class TestDasd(unittest.IsolatedAsyncioTestCase):
         expected_results = {
             devname: {'name': devname, 'type': 'virt'}
             }
-        self.assertEqual(expected_results, await dasd.probe(context=context))
+        with mock.patch('probert.dasd.open',
+                        mock.mock_open(read_data=f'{virtio_major} virtblk\n')):
+            self.assertEqual(expected_results,
+                             await dasd.probe(context=context))
         m_run.assert_called_once_with(
             ['fdasd', '-i', devname],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     @mock.patch('probert.dasd.subprocess.run')
-    @mock.patch('probert.dasd.open')
     @mock.patch('probert.dasd.platform.machine')
-    async def test_dasd_probe_virtio_non_dasd(self, m_machine, m_open, m_run):
+    async def test_dasd_probe_virtio_non_dasd(self, m_machine, m_run):
         m_machine.return_value = 's390x'
 
         virtio_major = random_string()
         devname = random_string()
 
-        m_open.return_value = ['{} virtblk\n'.format(virtio_major)]
         m_run.return_value.returncode = 1
 
         context = mock.MagicMock()
         context.list_devices.side_effect = iter([
             [{"MAJOR": virtio_major, "DEVNAME": devname}],
         ])
-        self.assertEqual({}, await dasd.probe(context=context))
+        with mock.patch('probert.dasd.open',
+                        mock.mock_open(read_data=f'{virtio_major} virtblk\n')):
+            self.assertEqual({}, await dasd.probe(context=context))
         m_run.assert_called_once_with(
             ['fdasd', '-i', devname],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
