@@ -162,7 +162,7 @@ def zfs_get_properties(zfs_name, raw_output=False):
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
                                 stderr=subprocess.DEVNULL)
-    except subprocess.ProcessExecutionError:
+    except subprocess.CalledProcessError:
         return []
 
     data = result.stdout.decode('utf-8')

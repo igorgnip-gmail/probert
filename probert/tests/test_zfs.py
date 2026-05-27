@@ -1,3 +1,4 @@
+import subprocess
 import unittest
 from unittest import mock
 
@@ -22,3 +23,11 @@ tank\tquota\t0\tdefault
         self.assertEqual(
                 'default',
                 result['tank']['properties']['quota']['source'])
+
+    @mock.patch('probert.zfs.subprocess.run')
+    def test_zfs_get_properties_returns_empty_on_calledprocesserror(
+            self, m_run):
+        m_run.side_effect = subprocess.CalledProcessError(
+            cmd=['zfs'], returncode=1)
+        result = zfs.zfs_get_properties('tank')
+        self.assertEqual([], result)
