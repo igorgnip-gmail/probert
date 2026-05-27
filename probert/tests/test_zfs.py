@@ -31,3 +31,10 @@ tank\tquota\t0\tdefault
             cmd=['zfs'], returncode=1)
         result = zfs.zfs_get_properties('tank')
         self.assertEqual([], result)
+
+    @mock.patch('probert.zfs.subprocess.run')
+    def test_zfs_get_properties_empty_name(self, m_run):
+        with self.assertRaises(ValueError) as m_exc:
+            zfs.zfs_get_properties('')
+        self.assertEqual('Invalid zfs_name parameter: ""',
+                         str(m_exc.exception))

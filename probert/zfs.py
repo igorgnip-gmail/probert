@@ -156,7 +156,7 @@ def zfs_list_filesystems(raw_output=False):
 
 def zfs_get_properties(zfs_name, raw_output=False):
     if not zfs_name:
-        raise ValueError('Invalid zfs_name parameter: "%s"', zfs_name)
+        raise ValueError(f'Invalid zfs_name parameter: "{zfs_name}"')
 
     cmd = ['zfs', 'get', 'all', '-Hp', zfs_name]
     try:
