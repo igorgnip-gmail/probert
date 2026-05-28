@@ -225,9 +225,9 @@ class Storage():
 
         if len(to_probe) == 0:
             not_avail = probe_types.difference(all_probes)
-            print('Requsted probes not available: %s' % probe_types)
+            print('Requested probes not available: %s' % probe_types)
             print('Valid probe types: %s' % all_probes)
-            print('Unavilable probe types: %s' % not_avail)
+            print('Unavailable probe types: %s' % not_avail)
             return self.results
 
         probed_data = {}
