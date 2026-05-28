@@ -77,7 +77,7 @@ def probe_pvs_report():
 
 def probe_vgs_report():
     report_cmd = ['vgs', '--reportformat=json', '--units=B',
-                  '-o', 'vg_name,pv_name,pv_uuid,vg_size']
+                  '-o', 'vg_name,pv_name,pv_missing,pv_uuid,vg_size']
     return _lvm_report(report_cmd, 'vg')
 
 
@@ -133,10 +133,10 @@ def extract_lvm_partition(probe_data):
 def extract_lvm_volgroup(vg_name, report_data):
     """
     [
-        {"vg_name":"vg0", "pv_name":"/dev/md0",
+        {"vg_name":"vg0", "pv_name":"/dev/md0", "pv_missing": "",
          "pv_uuid":"p3oDow-dRHp-L8jq-t6gQ-67tv-B8B6-JWLKZP",
          "vg_size":"21449670656B"},
-        {"vg_name":"vg0", "pv_name":"/dev/md1",
+        {"vg_name":"vg0", "pv_name":"/dev/md1", "pv_missing": "",
          "pv_uuid":"pRR5Zn-c4a9-teVZ-TFaU-yDxf-FSDo-cORcEq",
          "vg_size":"21449670656B"}
     ]
@@ -148,7 +148,9 @@ def extract_lvm_volgroup(vg_name, report_data):
 
     devices = set()
     size = None
+    missing_pvs = 0
     for report in report_data:
+        # There will be multiple matching entries, one for each PV in the VG.
         if report['vg_name'] == vg_name:
             vg_size = report['vg_size']
             # set size to the largest size we find
@@ -160,14 +162,21 @@ def extract_lvm_volgroup(vg_name, report_data):
                 elif size != vg_size:
                     if _int(vg_size) > _int(size):
                         size = vg_size
-            devices.add(report.get('pv_name'))
+
+            # If the PV is missing the value is typically set to "missing" but
+            # LVM2 checks for empty strings.
+            if report['pv_missing']:
+                missing_pvs += 1
+            else:
+                devices.add(report.get('pv_name'))
 
     if size is None:
         size = '0B'
 
-    return (vg_name, {'name': vg_name,
-                      'devices': sorted(list(devices)),
-                      'size': size})
+    return {'name': vg_name,
+            'devices': sorted(list(devices)),
+            'size': size,
+            'partial': missing_pvs > 0}
 
 
 async def probe(context=None, **kw):
@@ -208,6 +217,10 @@ async def probe(context=None, **kw):
     pvols = {}
     vg_report = probe_vgs_report()
 
+    for vg_name in {vg['vg_name'] for vg in vg_report}:
+        vgroups[vg_name] = extract_lvm_volgroup(vg_name, vg_report)
+        pvols[vg_name] = vgroups[vg_name]['devices']
+
     for device in sane_block_devices(context):
         if 'DM_UUID' in device and device['DM_UUID'].startswith('LVM'):
             (lv_id, new_lv) = extract_lvm_partition(device)
@@ -216,17 +229,6 @@ async def probe(context=None, **kw):
             else:
                 log.error('Found duplicate logical volume: %s', lv_id)
                 continue
-
-            vg_name = device['DM_VG_NAME']
-            (vg_id, new_vg) = extract_lvm_volgroup(vg_name, vg_report)
-            if vg_id not in vgroups:
-                vgroups[vg_id] = new_vg
-            else:
-                log.error('Found duplicate volume group: %s', vg_id)
-                continue
-
-            if vg_id not in pvols:
-                pvols[vg_id] = new_vg['devices']
 
     lvm = {}
     if lvols:
