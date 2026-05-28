@@ -38,7 +38,7 @@ schema = {
         "bios-version": {
             "type": ["string", "null"],
         },
-        "bios-release-data": {
+        "bios-release-date": {
             "type": ["string", "null"],
         },
     },
