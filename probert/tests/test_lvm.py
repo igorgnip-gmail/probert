@@ -368,5 +368,31 @@ class TestLvm(unittest.IsolatedAsyncioTestCase):
         }
         self.assertEqual(expected_result, await lvm.probe())
 
+    @mock.patch('probert.lvm.probe_vgs_report',
+                mock.Mock(return_value=VGS_REPORT))
+    @mock.patch('probert.lvm.sane_block_devices',
+                lambda ctx: [])
+    async def test_probe_vgs_pvs_without_lvs(self, _m_run):
+        # VGs/PVs from probe_vgs_report() must be returned even when
+        # no LVs are present.  (LP: #2143299)
+        result = await lvm.probe()
+
+        self.assertNotIn('logical_volumes', result)
+        self.assertEqual(
+            {'vg1': ['/dev/vda5', '/dev/vda6']},
+            result['physical_volumes'],
+        )
+        self.assertEqual(
+            {
+                'vg1': {
+                    'devices': ['/dev/vda5', '/dev/vda6'],
+                    'name': 'vg1',
+                    'size': '206145847296B',
+                    'partial': False,
+                }
+            },
+            result['volume_groups'],
+        )
+
 
 # vi: ts=4 expandtab syntax=python
