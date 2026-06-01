@@ -141,9 +141,10 @@ async def probe(context=None, **kw):
         context = pyudev.Context()
 
     virtio_major = None
-    for line in open('/proc/devices'):
-        if line.endswith('virtblk\n'):
-            virtio_major = line.split()[0]
+    with open('/proc/devices') as proc_dev:
+        for line in proc_dev:
+            if line.endswith('virtblk\n'):
+                virtio_major = line.split()[0]
 
     log.debug("found MAJOR for virtblk: %s", virtio_major)
 

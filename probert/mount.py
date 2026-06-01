@@ -34,7 +34,7 @@ def findmnt(data=None):
     try:
         mounts = json.loads(data)
     except json.decoder.JSONDecodeError as e:
-        log.error('Failed to load findmnt json output:', e)
+        log.error('Failed to load findmnt json output: %s', e)
 
     return mounts
 

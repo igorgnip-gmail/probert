@@ -40,7 +40,7 @@ def dmsetup_info(devname):
             ['sudo', 'dmsetup', 'info', devname, '-C', '-o',
              ','.join(fields), '--noheading', '--separator', _SEP])
     except subprocess.CalledProcessError as e:
-        log.error('Failed to probe dmsetup info:', e)
+        log.error('Failed to probe dmsetup info: %s', e)
         return None
     values = output.decode('utf-8').strip().split(_SEP)
     info = dict(zip(fields, values))

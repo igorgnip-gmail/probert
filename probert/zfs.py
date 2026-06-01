@@ -156,13 +156,13 @@ def zfs_list_filesystems(raw_output=False):
 
 def zfs_get_properties(zfs_name, raw_output=False):
     if not zfs_name:
-        raise ValueError('Invalid zfs_name parameter: "%s"', zfs_name)
+        raise ValueError(f'Invalid zfs_name parameter: "{zfs_name}"')
 
     cmd = ['zfs', 'get', 'all', '-Hp', zfs_name]
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
                                 stderr=subprocess.DEVNULL)
-    except subprocess.ProcessExecutionError:
+    except subprocess.CalledProcessError:
         return []
 
     data = result.stdout.decode('utf-8')
