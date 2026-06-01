@@ -24,7 +24,8 @@ def findmnt(data=None):
         cmd = ['findmnt', '--bytes', '--json', '-o', '+maj:min']
         try:
             result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.DEVNULL)
+                                    stderr=subprocess.DEVNULL,
+                                    check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
             return {}
 

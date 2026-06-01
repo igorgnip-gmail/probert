@@ -32,7 +32,8 @@ SUPPORTED_RAID_TYPES = ['raid0', 'raid1', 'raid5', 'raid6', 'raid10']
 def mdadm_assemble(scan=True, ignore_errors=True):
     cmd = ['mdadm', '--detail', '--scan', '-v']
     try:
-        subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                       check=True)
     except subprocess.CalledProcessError as e:
         log.error('Failed mdadm_assemble command %s: %s', cmd, e)
     except FileNotFoundError as e:
@@ -63,7 +64,8 @@ def get_mdadm_array_members(md_device):
     cmd = ['mdadm', '--detail', '--export', md_device]
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL)
+                                stderr=subprocess.DEVNULL,
+                                check=True)
         output = result.stdout.decode('utf-8')
     except subprocess.CalledProcessError as e:
         log.error('failed to get detail for %s: %s', md_device, e)

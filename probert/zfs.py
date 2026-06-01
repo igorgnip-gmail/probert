@@ -122,7 +122,8 @@ def zdb_asdict(data=None):
             cmd.append('-e')
         try:
             result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.DEVNULL)
+                                    stderr=subprocess.DEVNULL,
+                                    check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
             return {}
 
@@ -135,7 +136,8 @@ def zfs_list_filesystems(raw_output=False):
     cmd = ['zfs', 'list', '-Hp', '-t', 'filesystem']
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL)
+                                stderr=subprocess.DEVNULL,
+                                check=True)
     except subprocess.CalledProcessError:
         return []
 
@@ -161,7 +163,8 @@ def zfs_get_properties(zfs_name, raw_output=False):
     cmd = ['zfs', 'get', 'all', '-Hp', zfs_name]
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL)
+                                stderr=subprocess.DEVNULL,
+                                check=True)
     except subprocess.CalledProcessError:
         return []
 

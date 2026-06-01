@@ -2,6 +2,8 @@ import subprocess
 import unittest
 from unittest import mock
 
+from parameterized import parameterized
+
 from probert import multipath
 from probert.tests.helpers import random_string
 
@@ -78,12 +80,34 @@ class TestMultipath(unittest.IsolatedAsyncioTestCase):
         result = multipath.multipath_show_maps()
         self.assertEqual(expected_result, result)
 
-    @mock.patch('probert.multipath.subprocess.run')
-    def test_multipath_extract_returns_empty_list_on_err(self, m_run):
-        m_run.side_effect = subprocess.CalledProcessError(cmd=["my cmd"],
-                                                          returncode=1)
-        result = multipath.multipath_show_paths()
+    @parameterized.expand([
+        (subprocess.CalledProcessError(
+            cmd=['multipathd', 'show', 'paths', 'raw', 'format',
+                 '%d,%z,%m,%N,%n,%R,%r,%a'],
+            returncode=1),
+         'Failed to run cmd: %s',
+         (['multipathd', 'show', 'paths', 'raw', 'format',
+           '%d,%z,%m,%N,%n,%R,%r,%a'],)),
+        (FileNotFoundError(),
+         'Failed to run cmd: %s',
+         (['multipathd', 'show', 'paths', 'raw', 'format',
+           '%d,%z,%m,%N,%n,%R,%r,%a'],)),
+    ])
+    def test__extract_mpath_data__failure(self, exc, exp_msg, exp_args):
+        cmd = ['multipathd', 'show', 'paths', 'raw', 'format',
+               '%d,%z,%m,%N,%n,%R,%r,%a']
+        with mock.patch('probert.multipath.subprocess.run') as m_run:
+            m_run.side_effect = exc
+            with self.assertLogs('probert.multipath', level='ERROR') as logs:
+                result = multipath._extract_mpath_data(cmd, 'paths')
         self.assertEqual([], result)
+        self.assertEqual(len(logs.records), 1)
+        self.assertEqual(logs.records[0].msg, exp_msg)
+        self.assertEqual(logs.records[0].args, exp_args)
+        m_run.assert_called_once_with(
+            cmd,
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            check=True)
 
     @mock.patch('probert.multipath.multipath_show_paths')
     @mock.patch('probert.multipath.multipath_show_maps')

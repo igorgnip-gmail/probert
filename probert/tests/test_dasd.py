@@ -6,6 +6,8 @@ from probert import dasd
 from probert.tests import fakes
 from probert.tests.helpers import random_string
 
+from parameterized import parameterized
+
 
 # The tests parse canned dasdview output, and to be able to write
 # tests one needs to simply know what the correct parsed values
@@ -60,7 +62,30 @@ class TestDasd(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(dasdview_out, result)
         m_run.assert_called_with(['dasdview', '--extended', devname],
                                  stdout=subprocess.PIPE,
-                                 stderr=subprocess.DEVNULL)
+                                 stderr=subprocess.DEVNULL,
+                                 check=True)
+
+    @parameterized.expand([
+        (subprocess.CalledProcessError(cmd=['dasdview'], returncode=1),),
+        (FileNotFoundError(),),
+    ])
+    def test_dasdview__failure(self, exc):
+        devname = '/dev/dasda'
+        expected_cmd = ['dasdview', '--extended', devname]
+        with mock.patch('probert.dasd.os.path.exists',
+                        return_value=True), \
+             mock.patch('probert.dasd.subprocess.run') as m_run:
+            m_run.side_effect = exc
+            with self.assertLogs('probert.dasd', level='ERROR') as logs:
+                result = dasd.dasdview(devname)
+        self.assertIsNone(result)
+        m_run.assert_called_with(
+                expected_cmd, stdout=mock.ANY, stderr=mock.ANY, check=True)
+        # Check that we logged the command that failed
+        self.assertEqual(len(logs.records), 1)
+        self.assertEqual(
+            logs.records[0].msg, 'Failed to run cmd: %s')
+        self.assertEqual(logs.records[0].args, (expected_cmd,))
 
     @mock.patch('probert.dasd.os.path.exists')
     @mock.patch('probert.dasd.subprocess.run')
@@ -69,15 +94,6 @@ class TestDasd(unittest.IsolatedAsyncioTestCase):
         m_exists.return_value = False
         self.assertRaises(ValueError, dasd.dasdview, devname)
         self.assertEqual(0, m_run.call_count)
-
-    @mock.patch('probert.dasd.os.path.exists')
-    @mock.patch('probert.dasd.subprocess.run')
-    def test_dasdview_returns_none_on_subprocess_error(self, m_run, m_exists):
-        devname = random_string()
-        m_exists.return_value = True
-        m_run.side_effect = subprocess.CalledProcessError(
-            cmd=[random_string()], returncode=1)
-        self.assertEqual(None, dasd.dasdview(devname))
 
     def test_dasd_parses_blocksize(self):
         self.assertEqual(

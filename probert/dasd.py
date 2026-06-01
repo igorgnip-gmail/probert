@@ -82,7 +82,8 @@ def dasdview(devname):
     cmd = ['dasdview', '--extended', devname]
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL)
+                                stderr=subprocess.DEVNULL,
+                                check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         log.error('Failed to run cmd: %s', cmd)
         return None

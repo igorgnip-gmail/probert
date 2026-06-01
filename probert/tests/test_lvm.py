@@ -71,11 +71,21 @@ VGS_REPORT_DUPES = 2 * VGS_REPORT
 @mock.patch('probert.lvm.subprocess.run')
 class TestLvm(unittest.IsolatedAsyncioTestCase):
 
-    def test__lvm_report_returns_empty_list_on_err(self, m_run):
-        m_run.side_effect = subprocess.CalledProcessError(
-            cmd=[random_string()], returncode=1)
-        result = lvm._lvm_report(random_string(), random_string())
+    def test__lvm_report__cmd_failure(self, m_run):
+        cmd = ['lvs', '--reportformat=json']
+        err = subprocess.CalledProcessError(cmd=cmd, returncode=1,
+                                            output=b'partial output')
+        m_run.side_effect = err
+        with self.assertLogs('probert.lvm', level='ERROR') as logs:
+            result = lvm._lvm_report(cmd, random_string())
         self.assertEqual([], result)
+        self.assertEqual(len(logs.records), 1)
+        self.assertEqual(logs.records[0].msg,
+                         'Failed to probe LVM devices on system: %s')
+        self.assertEqual(logs.records[0].args, (err,))
+        m_run.assert_called_with(
+            cmd, stdout=mock.ANY, stderr=mock.ANY,
+            check=True)
 
     def test__lvm_report_returns_empty_list_on_no_output(self, m_run):
         cmd_out = ""
@@ -179,9 +189,11 @@ class TestLvm(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(2, m_metad.call_count)
         m_run.assert_has_calls([
           mock.call(['pvscan', '--cache'],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL),
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    check=True),
           mock.call(['vgscan', '--cache'],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)])
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    check=True)])
 
     @mock.patch('probert.lvm.lvmetad_running')
     def test_lvm_scan_handles_errors(self, m_metad, m_run):
@@ -194,9 +206,11 @@ class TestLvm(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(2, m_metad.call_count)
         m_run.assert_has_calls([
           mock.call(['pvscan', '--cache'],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL),
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    check=True),
           mock.call(['vgscan', '--cache'],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)])
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    check=True)])
 
     def test_activate_volgroups(self, m_run):
         lvm.activate_volgroups()

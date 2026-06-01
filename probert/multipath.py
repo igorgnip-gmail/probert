@@ -32,7 +32,8 @@ log = logging.getLogger('probert.multipath')
 def _extract_mpath_data(cmd, show_verb):
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL)
+                                stderr=subprocess.DEVNULL,
+                                check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         log.error('Failed to run cmd: %s', cmd)
         return []
