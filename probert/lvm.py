@@ -49,7 +49,8 @@ def _lvm_report(cmd, report_key):
 
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL)
+                                stderr=subprocess.DEVNULL,
+                                check=True)
         output = result.stdout.decode('utf-8')
     except subprocess.CalledProcessError as e:
         log.error('Failed to probe LVM devices on system: %s', e)
@@ -95,7 +96,8 @@ def lvm_scan():
             cmd.append('--cache')
         try:
             subprocess.run(cmd, stdout=subprocess.DEVNULL,
-                           stderr=subprocess.DEVNULL)
+                           stderr=subprocess.DEVNULL,
+                           check=True)
         except subprocess.CalledProcessError as e:
             log.error('Failed lvm_scan command %s: %s', cmd, e)
 

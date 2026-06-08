@@ -1,8 +1,11 @@
+import subprocess
 import unittest
+from unittest import mock
 from unittest.mock import AsyncMock, Mock
 import json
 
-from probert.storage import Storage, StorageInfo, interesting_storage_devs
+from probert.storage import (Storage, StorageInfo, blockdev_probe,
+                             interesting_storage_devs)
 from probert.tests.fakes import FAKE_PROBE_ALL_JSON
 
 from parameterized import parameterized
@@ -85,6 +88,42 @@ class ProbertTestStorageProbeSet(unittest.IsolatedAsyncioTestCase):
         await self.storage.probe(probe_types)
         for v in self.storage.probe_map.values():
             v.pfunc.assert_not_called()
+
+
+class TestBlockdevProbe(unittest.IsolatedAsyncioTestCase):
+    # Lots of mocks because _extract_partition_table is a nested function
+    # inside blockdev_probe — testing sfdisk's failure path requires
+    # patching everything that blockdev_probe touches.
+    @mock.patch('probert.storage.subprocess.run')
+    @mock.patch('probert.storage.read_sys_block_size_bytes')
+    @mock.patch('probert.storage.udev_get_attributes')
+    @mock.patch('probert.storage.interesting_storage_devs')
+    @mock.patch('probert.storage.pyudev')
+    async def test_extract_partition_table_sfdisk_failure(
+            self, m_pyudev, m_interesting, m_udev_attr, m_read_sys, m_run):
+        devname = '/dev/sda'
+        m_interesting.return_value = [
+            mock.MagicMock(
+                properties={'DEVNAME': devname})]
+        m_udev_attr.return_value = {'size': '1000'}
+        m_read_sys.return_value = 1000
+        err = subprocess.CalledProcessError(
+            cmd=['sfdisk'], returncode=1)
+        m_run.side_effect = err
+
+        with self.assertLogs('probert.storage', level='ERROR') as logs:
+            result = await blockdev_probe(context=mock.MagicMock())
+        self.assertIn(devname, result)
+        self.assertNotIn('pttype', result[devname])
+        self.assertEqual(len(logs.records), 1)
+        self.assertEqual(
+            logs.records[0].msg,
+            'Failed to probe partition table on %s:%s')
+        self.assertEqual(logs.records[0].args, (devname, err))
+        m_run.assert_called_with(
+            ['sfdisk', '--bytes', '--json', devname],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            check=True)
 
 
 class ProbertTestStorageInfo(unittest.TestCase):

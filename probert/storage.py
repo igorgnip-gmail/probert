@@ -114,7 +114,8 @@ async def blockdev_probe(context=None, **kw):
         cmd = ['sfdisk', '--bytes', '--json', devname]
         try:
             result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.DEVNULL)
+                                    stderr=subprocess.DEVNULL,
+                                    check=True)
             output = result.stdout.decode('utf-8')
         except subprocess.CalledProcessError as e:
             log.error('Failed to probe partition table on %s:%s', devname, e)
