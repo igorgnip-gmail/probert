@@ -1,6 +1,0 @@
-probert-common_0.0.21_all.deb admin optional architecture=all
-probert-firmware_0.0.21_all.deb admin optional architecture=all
-probert-network_0.0.21_all.deb admin optional architecture=all
-probert-storage_0.0.21_amd64.deb admin optional architecture=amd64
-probert_0.0.21_all.deb admin optional architecture=all
-probert_0.0.21_amd64.buildinfo admin optional
