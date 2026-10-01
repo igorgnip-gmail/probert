@@ -16,7 +16,7 @@ import logging
 import os
 import subprocess
 
-from probert.utils import sane_block_devices
+from probert.utils import log_command_failure, sane_block_devices
 
 
 log = logging.getLogger('probert.bcache')
@@ -31,7 +31,9 @@ def superblock_asdict(device=None, data=None):
     if not data:
         cmd = ['bcache-super-show', device]
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL)
+                                stderr=subprocess.PIPE)
+        if result.returncode != 0:
+            log_command_failure(cmd, result.returncode, result.stderr)
         data = result.stdout.decode('utf-8')
     bcache_super = {}
     for line in data.splitlines():

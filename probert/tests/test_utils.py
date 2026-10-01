@@ -177,5 +177,8 @@ class ProbertTestRun(unittest.TestCase):
                 'You did it wrong',
                 '--------------------------------------------------',
             )]
+            expected.append(
+                'WARNING:probert.utils:Command `%s` failed with result 7: '
+                'You did it wrong' % script)
             self.assertIsNone(actual)
             self.assertEqual(expected, m_logs.output)

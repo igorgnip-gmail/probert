@@ -20,6 +20,7 @@ import pyudev
 import subprocess
 
 from probert.utils import (
+    log_command_failure,
     read_sys_block_size_bytes,
     sane_block_devices,
     udev_get_attributes,
@@ -114,11 +115,12 @@ async def blockdev_probe(context=None, **kw):
         cmd = ['sfdisk', '--bytes', '--json', devname]
         try:
             result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.DEVNULL,
+                                    stderr=subprocess.PIPE,
                                     check=True)
             output = result.stdout.decode('utf-8')
         except subprocess.CalledProcessError as e:
             log.error('Failed to probe partition table on %s:%s', devname, e)
+            log_command_failure(cmd, e.returncode, e.stderr)
             return None
         if not output:
             return None

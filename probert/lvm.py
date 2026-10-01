@@ -20,6 +20,7 @@ import subprocess
 import pyudev
 
 from probert.utils import (
+    log_command_failure,
     read_sys_block_size_bytes,
     sane_block_devices,
     )
@@ -49,11 +50,12 @@ def _lvm_report(cmd, report_key):
 
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL,
+                                stderr=subprocess.PIPE,
                                 check=True)
         output = result.stdout.decode('utf-8')
     except subprocess.CalledProcessError as e:
         log.error('Failed to probe LVM devices on system: %s', e)
+        log_command_failure(cmd, e.returncode, e.stderr)
         return []
 
     if not output:
@@ -96,10 +98,11 @@ def lvm_scan():
             cmd.append('--cache')
         try:
             subprocess.run(cmd, stdout=subprocess.DEVNULL,
-                           stderr=subprocess.DEVNULL,
+                           stderr=subprocess.PIPE,
                            check=True)
         except subprocess.CalledProcessError as e:
             log.error('Failed lvm_scan command %s: %s', cmd, e)
+            log_command_failure(cmd, e.returncode, e.stderr)
 
 
 def activate_volgroups():
@@ -115,8 +118,11 @@ def activate_volgroups():
 
     # vgchange handles syncing with udev by default
     # see man 8 vgchange and flag --noudevsync
-    result = subprocess.run(['vgchange', '--activate=y'], check=False,
-                            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    cmd = ['vgchange', '--activate=y']
+    result = subprocess.run(cmd, check=False,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode != 0:
+        log_command_failure(cmd, result.returncode, result.stderr)
     if result.stdout:
         log.info(result.stdout)
 

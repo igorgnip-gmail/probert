@@ -16,6 +16,8 @@ import json
 import logging
 import subprocess
 
+from probert.utils import log_command_failure
+
 log = logging.getLogger('probert.mount')
 
 
@@ -24,9 +26,13 @@ def findmnt(data=None):
         cmd = ['findmnt', '--bytes', '--json', '-o', '+maj:min']
         try:
             result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.DEVNULL,
+                                    stderr=subprocess.PIPE,
                                     check=True)
-        except (subprocess.CalledProcessError, FileNotFoundError):
+        except subprocess.CalledProcessError as e:
+            log_command_failure(cmd, e.returncode, e.stderr)
+            return {}
+        except FileNotFoundError:
+            log.warning('Command `%s` not found', cmd[0])
             return {}
 
         data = result.stdout.decode('utf-8')

@@ -19,7 +19,7 @@ import pyudev
 import re
 import subprocess
 
-from probert.utils import sane_block_devices
+from probert.utils import log_command_failure, sane_block_devices
 
 
 log = logging.getLogger('probert.dasd')
@@ -82,10 +82,12 @@ def dasdview(devname):
     cmd = ['dasdview', '--extended', devname]
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL,
+                                stderr=subprocess.PIPE,
                                 check=True)
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
         log.error('Failed to run cmd: %s', cmd)
+        if isinstance(e, subprocess.CalledProcessError):
+            log_command_failure(cmd, e.returncode, e.stderr)
         return None
 
     return result.stdout.decode('utf-8')
