@@ -52,9 +52,19 @@ def _log_stream(stream, name):
         log.debug(f'<empty {name}>')
 
 
+def log_command_failure(cmd, status, stderr):
+    """Log a failed probe command at WARNING, with its stderr."""
+    if isinstance(stderr, bytes):
+        stderr = stderr.decode('utf-8', 'replace')
+    cmd = shlex.join(cmd) if isinstance(cmd, (list, tuple)) else cmd
+    log.warning('Command `%s` failed with result %s: %s',
+                cmd, status, (stderr or '').strip() or '<no stderr>')
+
+
 def run(cmdarr, env=None, **kw):
     """Run the given, with stdout, stderr, and return code always logged.
-    Returns the stdout on command success, or None on command failure."""
+    Returns the stdout on command success, or None on command failure;
+    a failure is also logged at WARNING."""
     env = _clean_env(env)
     sp = subprocess.run(cmdarr, text=True, env=env,
                         stdout=PIPE, stderr=PIPE, **kw)
@@ -64,14 +74,16 @@ def run(cmdarr, env=None, **kw):
     _log_stream(sp.stdout, 'stdout')
     _log_stream(sp.stderr, 'stderr')
     log.debug('--------------------------------------------------')
-    if sp.returncode == 0:
-        return sp.stdout
-    return None
+    if rc != 0:
+        log_command_failure(cmdarr, rc, sp.stderr)
+        return None
+    return sp.stdout
 
 
 async def arun(cmdarr, env=None, **kw):
     """Run the given, with stdout, stderr, and return code always logged.
-    Returns the stdout on command success, or None on command failure."""
+    Returns the stdout on command success, or None on command failure;
+    a failure is also logged at WARNING."""
     env = _clean_env(env)
     sp = await asyncio.create_subprocess_exec(
             *cmdarr, env=env, stdout=PIPE, stderr=PIPE, **kw)
@@ -86,9 +98,10 @@ async def arun(cmdarr, env=None, **kw):
     _log_stream(stdout, 'stdout')
     _log_stream(stderr, 'stderr')
     log.debug('--------------------------------------------------')
-    if sp.returncode == 0:
-        return stdout
-    return None
+    if rc != 0:
+        log_command_failure(cmdarr, rc, stderr)
+        return None
+    return stdout
 
 
 # from juju-deployer utils.relation_merge

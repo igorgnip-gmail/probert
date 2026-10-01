@@ -16,6 +16,8 @@ from collections import namedtuple
 import logging
 import subprocess
 
+from probert.utils import log_command_failure
+
 MPath = namedtuple("MPath", ('device', 'serial', 'multipath', 'host_wwnn',
                              'target_wwnn', 'host_wwpn', 'target_wwpn',
                              'host_adapter'))
@@ -32,10 +34,12 @@ log = logging.getLogger('probert.multipath')
 def _extract_mpath_data(cmd, show_verb):
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL,
+                                stderr=subprocess.PIPE,
                                 check=True)
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
         log.error('Failed to run cmd: %s', cmd)
+        if isinstance(e, subprocess.CalledProcessError):
+            log_command_failure(cmd, e.returncode, e.stderr)
         return []
 
     mptype = MPATH_SHOW[show_verb]

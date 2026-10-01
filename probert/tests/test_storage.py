@@ -122,7 +122,7 @@ class TestBlockdevProbe(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(logs.records[0].args, (devname, err))
         m_run.assert_called_with(
             ['sfdisk', '--bytes', '--json', devname],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             check=True)
 
 

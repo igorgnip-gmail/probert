@@ -189,10 +189,10 @@ class TestLvm(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(2, m_metad.call_count)
         m_run.assert_has_calls([
           mock.call(['pvscan', '--cache'],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                     check=True),
           mock.call(['vgscan', '--cache'],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                     check=True)])
 
     @mock.patch('probert.lvm.lvmetad_running')
@@ -206,17 +206,17 @@ class TestLvm(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(2, m_metad.call_count)
         m_run.assert_has_calls([
           mock.call(['pvscan', '--cache'],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                     check=True),
           mock.call(['vgscan', '--cache'],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                     check=True)])
 
     def test_activate_volgroups(self, m_run):
         lvm.activate_volgroups()
         m_run.assert_has_calls([
           mock.call(['vgchange', '--activate=y'], check=False,
-                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)])
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)])
 
     def test_extract_lvm_volgroup(self, m_run):
         input_data = json.loads(

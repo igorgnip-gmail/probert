@@ -22,7 +22,7 @@ class TestFindmnt(unittest.TestCase):
         self.assertEqual(filesystems, result.get('filesystems'))
         m_run.assert_called_once_with(
             ['findmnt', '--bytes', '--json', '-o', '+maj:min'],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             check=True)
 
     @parameterized.expand([

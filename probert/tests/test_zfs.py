@@ -46,7 +46,7 @@ class TestZfsListFilesystems(unittest.TestCase):
         self.assertEqual('tank', result[0].name)
         m_run.assert_called_once_with(
             ['zfs', 'list', '-Hp', '-t', 'filesystem'],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             check=True)
 
     @mock.patch('probert.zfs.subprocess.run')
@@ -57,7 +57,7 @@ class TestZfsListFilesystems(unittest.TestCase):
         self.assertEqual([], result)
         m_run.assert_called_once_with(
             ['zfs', 'list', '-Hp', '-t', 'filesystem'],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             check=True)
 
     @mock.patch('probert.zfs.subprocess.run')
@@ -99,7 +99,7 @@ tank\tquota\t0\tdefault
         self.assertEqual([], result)
         m_run.assert_called_once_with(
             ['zfs', 'get', 'all', '-Hp', 'tank'],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             check=True)
 
     @mock.patch('probert.zfs.subprocess.run')

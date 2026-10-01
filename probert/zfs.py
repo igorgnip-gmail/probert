@@ -18,6 +18,8 @@ import operator
 import os
 import re
 import subprocess
+
+from probert.utils import log_command_failure
 from functools import reduce
 
 
@@ -122,9 +124,13 @@ def zdb_asdict(data=None):
             cmd.append('-e')
         try:
             result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.DEVNULL,
+                                    stderr=subprocess.PIPE,
                                     check=True)
-        except (subprocess.CalledProcessError, FileNotFoundError):
+        except subprocess.CalledProcessError as e:
+            log_command_failure(cmd, e.returncode, e.stderr)
+            return {}
+        except FileNotFoundError:
+            log.warning('Command `%s` not found', cmd[0])
             return {}
 
         data = result.stdout.decode('utf-8')
@@ -136,9 +142,10 @@ def zfs_list_filesystems(raw_output=False):
     cmd = ['zfs', 'list', '-Hp', '-t', 'filesystem']
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL,
+                                stderr=subprocess.PIPE,
                                 check=True)
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as e:
+        log_command_failure(cmd, e.returncode, e.stderr)
         return []
 
     data = result.stdout.decode('utf-8')
@@ -163,9 +170,10 @@ def zfs_get_properties(zfs_name, raw_output=False):
     cmd = ['zfs', 'get', 'all', '-Hp', zfs_name]
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL,
+                                stderr=subprocess.PIPE,
                                 check=True)
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as e:
+        log_command_failure(cmd, e.returncode, e.stderr)
         return []
 
     data = result.stdout.decode('utf-8')

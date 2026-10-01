@@ -62,7 +62,7 @@ class TestDasd(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(dasdview_out, result)
         m_run.assert_called_with(['dasdview', '--extended', devname],
                                  stdout=subprocess.PIPE,
-                                 stderr=subprocess.DEVNULL,
+                                 stderr=subprocess.PIPE,
                                  check=True)
 
     @parameterized.expand([

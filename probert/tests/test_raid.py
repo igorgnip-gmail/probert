@@ -27,7 +27,7 @@ class TestMdadmAssemble(unittest.TestCase):
         self.assertEqual(logs.records[0].args, exp_args)
         m_run.assert_called_once_with(
             ['mdadm', '--detail', '--scan', '-v'],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             check=True)
 
 
@@ -54,7 +54,7 @@ class TestGetMdadmArrayMembers(unittest.TestCase):
         self.assertEqual(['/dev/dm-5'], spares)
         m_run.assert_called_once_with(
             ['mdadm', '--detail', '--export', '/dev/md0'],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             check=True)
 
     def test_get_mdadm_array_members__calledprocesserror(self):
@@ -71,5 +71,5 @@ class TestGetMdadmArrayMembers(unittest.TestCase):
             logs.records[0].args, ('/dev/md0', exc))
         m_run.assert_called_once_with(
             ['mdadm', '--detail', '--export', '/dev/md0'],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             check=True)
